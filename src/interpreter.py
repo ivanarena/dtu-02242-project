@@ -1,12 +1,20 @@
+import src.analyser
+import os
+import time
+
+
 class Interpreter:
     def __init__(self):
         self.memory = [0] * 30000
         self.pointer = 0
         self.output = ''
+        self.runtime = 0
 
-    def interpret(self, code):
+    def interpret(self, code, input=None):
+        start_time = time.time()
         code_ptr = 0
         code_length = len(code)
+        input_ptr = 0
 
         while code_ptr < code_length:
             command = code[code_ptr]
@@ -24,9 +32,13 @@ class Interpreter:
             elif command == '.':
                 self.output += chr(self.memory[self.pointer])
             elif command == ',':
-                user_input = input('Enter a character: ')
-                if len(user_input) > 0:
-                    self.memory[self.pointer] = ord(user_input[0])
+                if input and input_ptr < len(input):
+                    self.memory[self.pointer] = ord(input[input_ptr])
+                    input_ptr += 1
+                else:
+                    print(input_ptr, input)
+                    raise 'The input provided is not correct!'
+
             elif command == '[':
                 if self.memory[self.pointer] == 0:
                     loop_depth = 1
@@ -48,15 +60,27 @@ class Interpreter:
 
             code_ptr += 1
 
-    def get_output(self):
-        return self.output
+        end_time = time.time()
+        self.runtime = (end_time - start_time) * 1000
+        if self.output:
+            print(self.output)
 
 
 if __name__ == '__main__':
-    with open('programs/hello.bf', 'r') as file:
-        hello_bf_code = file.read()
+    PROGRAMS_DIRECTORY = 'programs/'
 
-    interpreter = Interpreter()
-    interpreter.interpret(hello_bf_code)
+    filenames = os.listdir(PROGRAMS_DIRECTORY)
 
-    print(interpreter.get_output())
+    # Loop through the list of files and read each file
+    for filename in filenames:
+        if filename.endswith('.bf'):
+            file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
+            with open(file_path, 'r') as file:
+                interpreter = Interpreter()
+                print(f"Interpreting {filename}...")
+                bf_code = file.read()
+                interpreter.interpret(
+                    bf_code, '23')
+
+                print(
+                    f"Interpreted {filename} in {round(interpreter.runtime,3)} ms.")
