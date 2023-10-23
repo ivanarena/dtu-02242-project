@@ -1,17 +1,28 @@
-from typing import Any
-import src.analyser
+from src.analyser import Analyser
 import os
 import time
 
 
 class Interpreter:
-    def __init__(self):
+    def __init__(
+        self,
+        valid_characters=True
+    ):
+
         self.memory = [0] * 30000
         self.pointer = 0
         self.output = ''
         self.runtime = 0
 
+        self.valid_characters = valid_characters
+
+        self.analyser = Analyser()
+
     def interpret(self, code, input=None):
+
+        if self.valid_characters:
+            code = self.analyser.valid_characters(code)
+
         start_time = time.time()
         code_ptr = 0
         code_length = len(code)
@@ -93,4 +104,4 @@ if __name__ == '__main__':
                 interpreter(file_path, input)
                 print(
                     f"Interpreted {filename} in {round(interpreter.runtime,3)} ms.")
-                print(f"="*40)
+                print(f"="*50)
