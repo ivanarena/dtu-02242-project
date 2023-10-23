@@ -1,16 +1,28 @@
-import src.analyser
+from src.analyser import Analyser
 import os
 import time
 
 
 class Interpreter:
-    def __init__(self):
+    def __init__(
+        self,
+        valid_characters=True
+    ):
+
         self.memory = [0] * 30000
         self.pointer = 0
         self.output = ''
         self.runtime = 0
 
+        self.valid_characters = valid_characters
+
+        self.analyser = Analyser()
+
     def interpret(self, code, input=None):
+
+        if self.valid_characters:
+            code = self.analyser.valid_characters(code)
+
         start_time = time.time()
         code_ptr = 0
         code_length = len(code)
@@ -35,9 +47,6 @@ class Interpreter:
                 if input and input_ptr < len(input):
                     self.memory[self.pointer] = ord(input[input_ptr])
                 input_ptr += 1
-                # else:
-                #     raise 'The input provided is not correct!'
-
             elif command == '[':
                 if self.memory[self.pointer] == 0:
                     loop_depth = 1
@@ -64,23 +73,35 @@ class Interpreter:
         if self.output:
             print(self.output)
 
+    def reset(self):
+        self.memory = [0] * 30000
+        self.pointer = 0
+        self.output = ''
+        self.runtime = 0
 
+    def __call__(self, file_path, input):
+        self.reset()
+
+        with open(file_path, 'r') as file:
+            self.code = file.read()
+
+        self.interpret(self.code, input=input)
+
+
+# temporary to run each files
 if __name__ == '__main__':
     PROGRAMS_DIRECTORY = 'programs/'
 
     filenames = os.listdir(PROGRAMS_DIRECTORY)
 
-    # Loop through the list of files and read each file
+    interpreter = Interpreter()
     for filename in filenames:
         if filename.endswith('.bf'):
             file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
             with open(file_path, 'r') as file:
-                interpreter = Interpreter()
-                print(f"="*40)
                 print(f"Interpreting {filename}...")
-                bf_code = file.read()
-                interpreter.interpret(
-                    bf_code, '314')
-
+                input = '2331'
+                interpreter(file_path, input)
                 print(
                     f"Interpreted {filename} in {round(interpreter.runtime,3)} ms.")
+                print(f"="*50)
