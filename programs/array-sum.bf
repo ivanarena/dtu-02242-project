@@ -1,3 +1,3 @@
-[to compute the sum of three integers]
+#Program to compute the sum of three integers
 
 ,>++++++[<-------->-],[<+>-]<.[-]<.
