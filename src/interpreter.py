@@ -34,10 +34,9 @@ class Interpreter:
             elif command == ',':
                 if input and input_ptr < len(input):
                     self.memory[self.pointer] = ord(input[input_ptr])
-                    input_ptr += 1
-                else:
-                    print(input_ptr, input)
-                    raise 'The input provided is not correct!'
+                input_ptr += 1
+                # else:
+                #     raise 'The input provided is not correct!'
 
             elif command == '[':
                 if self.memory[self.pointer] == 0:
@@ -77,10 +76,11 @@ if __name__ == '__main__':
             file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
             with open(file_path, 'r') as file:
                 interpreter = Interpreter()
+                print(f"="*40)
                 print(f"Interpreting {filename}...")
                 bf_code = file.read()
                 interpreter.interpret(
-                    bf_code, '23')
+                    bf_code, '314')
 
                 print(
                     f"Interpreted {filename} in {round(interpreter.runtime,3)} ms.")
