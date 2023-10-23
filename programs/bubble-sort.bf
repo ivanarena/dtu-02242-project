@@ -1,4 +1,4 @@
-#This program sorts the bytes of its input by bubble sort.
+#This program sorts the bytes of its input by bubble sort
 
 >>,[>>,]<<[
 [<<]>>>>[

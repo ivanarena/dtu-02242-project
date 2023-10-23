@@ -1,4 +1,4 @@
-# Output powers of two, in decimal. (Doesn't terminate.)
+# Output powers of two in decimal (Doesn't terminate)
 
 >++++++++++>>+<+[[+++++[>++++++++<-]>.<++++++[>--------<-]+<<]>.>[->[
 <++>-[<++>-[<++>-[<++>-[<-------->>[-]++<-[<++>-]]]]]]<[>+<-]+>>]<<]  

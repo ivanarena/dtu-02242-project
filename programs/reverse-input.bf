@@ -1,3 +1,3 @@
-#Reverse input.
+#Reverse input
 
 >,[>,]<[.<]
