@@ -31,3 +31,11 @@ if you use Windows (cmd). Then you can run the tests, from root directory:
 pytest tests/interpreter_tests.py
 ```
 
+# Run
+
+To only run the interpreter run this command from the root directory:
+
+```bash
+python src/intepreter.py
+```
+
