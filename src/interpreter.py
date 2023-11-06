@@ -1,4 +1,5 @@
-from src.analyser import Analyser
+from syntax_analyser import SyntaxAnalyzer
+from sematics_analyzer import SemanticsAnalyzer
 import os
 import time
 
@@ -6,27 +7,39 @@ import time
 class Interpreter:
     def __init__(
         self,
-        valid_characters=True
     ):
-
         self.memory = [0] * 30000
         self.pointer = 0
         self.output = ''
         self.runtime = 0
+        self.steps = 0
 
-        self.valid_characters = valid_characters
+        self.syntax_analyzer = SyntaxAnalyzer()
+        self.semantics_analyzer = SemanticsAnalyzer()
 
-        self.analyser = Analyser()
+    def interpret(self, code, input=None, analysis='syntactic'):
+        """
+        Interprets a Brainfuck program
 
-    def interpret(self, code, input=None):
-
-        if self.valid_characters:
-            code = self.analyser.valid_characters(code)
+        Inputs:
+            - code: Brainfuck code
+            - input: if not None, the input string for the program  
+            - analysis: ['syntactic' | 'semantic'] 
+        """
 
         start_time = time.time()
         code_ptr = 0
         code_length = len(code)
         input_ptr = 0
+
+        if analysis == 'syntactic':
+            analyzer = self.syntax_analyzer
+            try:
+                halts = analyzer(code)
+            except:
+                raise SystemError('The program never halts.')
+        else:
+            analyzer = self.semantics_analyzer
 
         while code_ptr < code_length:
             command = code[code_ptr]
@@ -52,6 +65,7 @@ class Interpreter:
                     loop_depth = 1
                     while loop_depth > 0:
                         code_ptr += 1
+                        self.steps += 1
                         if code[code_ptr] == '[':
                             loop_depth += 1
                         elif code[code_ptr] == ']':
@@ -65,8 +79,10 @@ class Interpreter:
                             loop_depth += 1
                         elif code[code_ptr] == '[':
                             loop_depth -= 1
-
             code_ptr += 1
+            self.steps += 1
+            if (self.steps > 10000):
+                raise RuntimeError() 
 
         end_time = time.time()
         self.runtime = (end_time - start_time) * 1000
@@ -78,14 +94,15 @@ class Interpreter:
         self.pointer = 0
         self.output = ''
         self.runtime = 0
+        self.steps = 0
 
-    def __call__(self, file_path, input):
+    def __call__(self, file_path, input, analysis):
         self.reset()
 
         with open(file_path, 'r') as file:
             self.code = file.read()
 
-        self.interpret(self.code, input=input)
+        self.interpret(self.code, input=input, analysis=analysis)
 
 
 # temporary to run each files
@@ -101,7 +118,11 @@ if __name__ == '__main__':
             with open(file_path, 'r') as file:
                 print(f"Interpreting {filename}...")
                 input = '2331'
-                interpreter(file_path, input)
-                print(
-                    f"Interpreted {filename} in {round(interpreter.runtime,3)} ms.")
+                analysis = 'syntactic'
+                try:
+                    interpreter(file_path, input=input, analysis=analysis)
+                    print(
+                        f"Interpreted {filename} in {interpreter.steps} steps.")
+                except:
+                    print('SystemError: The program never halts.')    
                 print(f"="*50)

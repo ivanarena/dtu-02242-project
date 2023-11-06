@@ -22,9 +22,20 @@ def read(file_path):
     return code
 
 
+"""
+Optimizations list:
+- v1: valid_characters
+"""
+
+
 @pytest.fixture
 def interpreter():
     return Interpreter()
+
+
+@pytest.fixture
+def interpreter_v1():
+    return Interpreter(valid_characters=True)
 
 
 def test_hello(interpreter):
