@@ -54,7 +54,9 @@ class Interpreter:
             analyzer = self.syntax_analyzer
             try:
                 halts = analyzer(code)
-            except:
+            except SyntaxError:
+                raise SyntaxError('The program is not well-formatted.')
+            except SystemError:
                 raise SystemError('The program never halts.')
         else:
             analyzer = self.semantics_analyzer
@@ -141,6 +143,9 @@ if __name__ == '__main__':
                     interpreter(file_path, input=input, analysis=analysis)
                     print(
                         f"Interpreted {filename} in {interpreter.steps} steps.")
-                except:
-                    print('SystemError: The program never halts.')    
+                except SyntaxError:
+                    print('SyntaxError: The program is not well-formatted.')   
+                except RuntimeError:
+                    print('RuntimeError: The program did not halt in 10000 steps.')     
+                
                 print(f"="*50)
