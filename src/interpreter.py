@@ -1,4 +1,4 @@
-from syntax_analyser import SyntaxAnalyzer
+from syntax_analyzer import SyntaxAnalyzer
 from sematics_analyzer import SemanticsAnalyzer
 import os
 import time
@@ -31,6 +31,24 @@ class Interpreter:
         code_ptr = 0
         code_length = len(code)
         input_ptr = 0
+
+        def _extract_loops(code):
+            stack = []
+            loops = []
+            for i, ch in enumerate(code):
+                if ch == '[':
+                    stack.append(i)
+                elif ch == ']':
+                    if not stack:
+                        raise ValueError(f"Unbalanced brackets at index {i}")
+                    start = stack.pop()
+                    loops.append((start, i, code[start+1:i]))
+            if stack:
+                raise ValueError(f"Unbalanced brackets at index {stack[0]}")
+            return loops
+        
+        print(_extract_loops(code))
+
 
         if analysis == 'syntactic':
             analyzer = self.syntax_analyzer

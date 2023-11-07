@@ -22,12 +22,6 @@ def read(file_path):
     return code
 
 
-"""
-Optimizations list:
-- v1: valid_characters
-"""
-
-
 @pytest.fixture
 def interpreter():
     return Interpreter()
