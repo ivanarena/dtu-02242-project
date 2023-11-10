@@ -103,7 +103,9 @@ class Interpreter:
         self.reset()
 
         with open(file_path, 'r') as file:
-            self.code = file.read()
+            content = file.read()
+
+        self.code = ''.join(c for c in content if c in "+-<>[],.") # extract only the program
 
         self.interpret(self.code, input=input, analysis=analysis)
 

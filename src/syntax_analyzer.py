@@ -6,7 +6,7 @@ class SyntaxAnalyzer:
     def __init__(self):
         self.runtime = 0
 
-    def analyze(self, code):
+    def analyze(self, code):      
         is_open_bracket = re.search(r'\[', code)
         is_closed_bracket = re.search(r'\]', code)
 

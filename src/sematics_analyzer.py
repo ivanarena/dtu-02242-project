@@ -56,7 +56,7 @@ class SemanticsAnalyzer:
                 depth += 1
             elif ch == ']':
                 if not stack:
-                    raise ValueError(f"Unbalanced brackets at index {i}")
+                    raise SyntaxError(f"Unbalanced brackets at index {i}")
                 start = stack.pop()
                 if ptr_stack[-1] not in loops.keys():
                     loops[ptr_stack[-1]] = []
@@ -69,7 +69,9 @@ class SemanticsAnalyzer:
                 ptr_stack.pop()
                 depth -= 1
         if stack:
-            raise ValueError(f"Unbalanced brackets at index {stack[0]}")
+            raise SyntaxError(f"Unbalanced brackets at index {stack[0]}")
+        
+
         return loops, variables
 
 
@@ -87,16 +89,16 @@ class SemanticsAnalyzer:
             }
         """
         loops, variables = self._parse_loops(code)        
-        print(loops)
-        print(variables)
+
         # TODO:
         # 1.    decide queue order
         # 2.    for every loop in order:
         #   2.1     read loop
         #   2.2     update variables dict
-        #   2.3     decide if loop terminates
+        #   2.3     decide if loop terminates 
         #       2.3.1a   if loop terminates continue
-        #       2.3.1b   if loop doesn't terminate raise exception
+        #       2.3.1b   if loop doesn't terminate raise exception 
+                            # loop for sure does not terminate if the variable I entered the loop with is untouched
 
     def __call__(self, code):
         self.analyze(code)
