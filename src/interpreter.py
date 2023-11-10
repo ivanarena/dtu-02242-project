@@ -32,23 +32,6 @@ class Interpreter:
         code_length = len(code)
         input_ptr = 0
 
-        def _extract_loops(code):
-            stack = []
-            loops = []
-            for i, ch in enumerate(code):
-                if ch == '[':
-                    stack.append(i)
-                elif ch == ']':
-                    if not stack:
-                        raise ValueError(f"Unbalanced brackets at index {i}")
-                    start = stack.pop()
-                    loops.append((start, i, code[start+1:i]))
-            if stack:
-                raise ValueError(f"Unbalanced brackets at index {stack[0]}")
-            return loops
-        
-        print(_extract_loops(code))
-
 
         if analysis == 'syntactic':
             analyzer = self.syntax_analyzer
@@ -101,7 +84,7 @@ class Interpreter:
                             loop_depth -= 1
             code_ptr += 1
             self.steps += 1
-            if (self.steps > 10000):
+            if (self.steps > 10000): # increase this
                 raise RuntimeError() 
 
         end_time = time.time()
@@ -137,7 +120,7 @@ if __name__ == '__main__':
             file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
             with open(file_path, 'r') as file:
                 print(f"Interpreting {filename}...")
-                input = '2331'
+                input = 'hello'
                 analysis = 'syntactic'
                 try:
                     interpreter(file_path, input=input, analysis=analysis)
