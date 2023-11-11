@@ -43,6 +43,10 @@ class Interpreter:
                 raise SystemError('The program never halts.')
         else:
             analyzer = self.semantics_analyzer
+            try:
+                halts = analyzer(code)
+            except SystemError:
+                raise SystemError('The program never halts.')
 
         while code_ptr < code_length:
             command = code[code_ptr]
@@ -105,7 +109,7 @@ class Interpreter:
         with open(file_path, 'r') as file:
             content = file.read()
 
-        self.code = ''.join(c for c in content if c in "+-<>[],.") # extract only the program
+        self.code = ''.join(c for c in content if c in "+-<>[],.")
 
         self.interpret(self.code, input=input, analysis=analysis)
 
