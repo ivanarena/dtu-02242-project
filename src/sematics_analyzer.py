@@ -24,17 +24,19 @@ class SemanticsAnalyzer:
                 return i
         raise SyntaxError(f"No matching closing bracket for the opening bracket at index {start}")
 
-    def _parse_loops(self, code, start=0, end=None, ptr=0, curr_var=0, variables = {}):
+    def _parse_loops(self, code, start=0, end=None, ptr=0, curr_var=0, variables={}):
         stack = []
+        loops = []
 
         if end is None:
             end = len(code)
 
-        for i in range(start, end):
+        i = start
+        while i < end:
             ch = code[i]
             print(ch, ptr)
             if ch == '>':
-                if (ptr == UPPER_BOUND): # upper bound err
+                if ptr == UPPER_BOUND:  # upper bound err
                     raise SystemError('Pointer out of bounds')
                 ptr += 1
                 if ptr in variables.keys():
@@ -42,7 +44,7 @@ class SemanticsAnalyzer:
                 else:
                     curr_var = 0
             elif ch == '<':
-                if (ptr == LOWER_BOUND): # lower bound err
+                if ptr == LOWER_BOUND:  # lower bound err
                     raise SystemError('Pointer out of bounds')
                 ptr -= 1
                 if ptr in variables.keys():
@@ -51,10 +53,10 @@ class SemanticsAnalyzer:
                     curr_var = 0
             elif ch == '+':
                 curr_var += 1
-                variables[ptr] = curr_var 
+                variables[ptr] = curr_var
             elif ch == '-':
                 curr_var -= 1
-                variables[ptr] = curr_var 
+                variables[ptr] = curr_var
             elif ch == '[':
                 loop = {
                     "cell": ptr,
@@ -72,15 +74,17 @@ class SemanticsAnalyzer:
                     raise SyntaxError('Loop end found without a corresponding loop start')
                 loop = stack.pop()
                 loop["end"] = i
-                loop["code"] = code[loop["start"]+1:i]
+                loop["code"] = code[loop["start"] + 1:i]
                 if stack:
                     stack[-1]["nested_loop"].append(loop)
                 else:
-                    return loop, variables
+                    loops.append(loop)
+            i += 1
 
         if stack:
             raise SyntaxError('Loop start found without a corresponding loop end')
-        return stack, variables
+
+        return loops, variables
 
 
 
@@ -187,6 +191,7 @@ class SemanticsAnalyzer:
         self.analyze(code)
 
 s = SemanticsAnalyzer()
-program = "+++[++[>>>[>>]]][+++++]"
+program = "+++[++[>>>[>>]]][>>++[+++]]"
+program = "+++[++[>>>[>>]]][>>++[]]"
 # program = "+[>++[<-]]" # a=1 b=2
 s(program)
