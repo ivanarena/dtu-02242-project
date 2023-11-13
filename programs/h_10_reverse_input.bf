@@ -1,0 +1,3 @@
+# HALTS: reverse input
+
+>,[>,]<[.<]

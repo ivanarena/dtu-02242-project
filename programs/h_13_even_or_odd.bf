@@ -1,3 +1,5 @@
+# HALTS: given an input it says if it is even or odd
+
 Read input to first byte (up to 255)
 >>,[>++++++[-<-------->]+++++++++[-<<[->+>>+<<<]>>>[-<<<+>>>]<]<[-<+>],]<
 Set 4th bit to 2
