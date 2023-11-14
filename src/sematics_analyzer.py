@@ -34,7 +34,7 @@ class SemanticsAnalyzer:
         i = start
         while i < end:
             ch = code[i]
-            print(ch, ptr)
+            # print(ch, ptr)
             if ch == '>':
                 if ptr == UPPER_BOUND:  # upper bound err
                     raise SystemError('Pointer out of bounds')
@@ -64,7 +64,7 @@ class SemanticsAnalyzer:
                     "start": i,
                     "code": "",
                     "has_nested_loop": False,
-                    "nested_loop": []
+                    "nested_loop": None
                 }
                 if stack:
                     stack[-1]["has_nested_loop"] = True
@@ -76,7 +76,7 @@ class SemanticsAnalyzer:
                 loop["end"] = i
                 loop["code"] = code[loop["start"] + 1:i]
                 if stack:
-                    stack[-1]["nested_loop"].append(loop)
+                    stack[-1]["nested_loop"] = loop
                 else:
                     loops.append(loop)
             i += 1
@@ -86,10 +86,27 @@ class SemanticsAnalyzer:
 
         return loops, variables
 
+    def __sanitize(self, code):
+        pattern = re.compile(r'\[.*?\]')  # Match anything inside square brackets
+        sanitized_code = re.sub(pattern, '', code)  # Remove text inside square brackets
+        pattern = re.compile(r'\]')  # Match anything inside square brackets
+        sanitized_code = re.sub(pattern, '', sanitized_code)  # Remove text inside square brackets
+        return sanitized_code
 
+    def _solve_loop(self, cell, value, code):
 
+        code = self.__sanitize(code) # only keep relevant values
 
+        # remember to update variables
 
+        return cell
+
+    def _get_nth_loop(self, loop, nested_count):
+        while nested_count > 0:
+            loop = loop['nested_loop']
+            nested_count -= 1
+        return loop
+    
 
     def analyze(self, code):
         """
@@ -105,12 +122,12 @@ class SemanticsAnalyzer:
             }
         """
         loops, variables = self._parse_loops(code)      
-        print("CODE")
-        pprint.pprint(code)
-        print("LOOPS")
-        pprint.pprint(loops)
-        print("variables")
-        pprint.pprint(variables)
+        # print("CODE")
+        # pprint.pprint(code)
+        # print("LOOPS")
+        # pprint.pprint(loops)
+        # print("variables")
+        # pprint.pprint(variables)
         
         # TODO:
         # 1.    decide queue order
@@ -121,6 +138,22 @@ class SemanticsAnalyzer:
         #       2.3.1a   if loop terminates continue
         #       2.3.1b   if loop doesn't terminate raise exception 
                             # loop for sure does not terminate if the variable I entered the loop with stays untouched
+        for loop in loops:
+            curr_loop = loop
+            nested_count = 0
+            
+            curr_loop, nested_count = self._get_innermost_loop(curr_loop, nested_count)
+            
+            while nested_count >= 0: # solve in order of depth
+                updated_variables = self._solve_loop(curr_loop["cell"], curr_loop["value"], curr_loop["code"])
+                
+                nested_count -= 1
+                curr_loop = self._get_nth_loop(loop, nested_count) # get loop 1 level above
+                
+            
+        
+        
+        
         """
         updated_variables = variables
         for key, elem in loops.items(): # iterate through the loops in the program
@@ -186,12 +219,19 @@ class SemanticsAnalyzer:
                                 
             """
 
+    def _get_innermost_loop(self, curr_loop, nested_count):
+        while curr_loop['has_nested_loop'] is True: # go to innermost loop 
+            nested_count += 1
+            curr_loop = curr_loop['nested_loop']
+        return curr_loop, nested_count
+
 
     def __call__(self, code):
         self.analyze(code)
 
 s = SemanticsAnalyzer()
 program = "+++[++[>>>[>>]]][>>++[+++]]"
-program = "+++[++[>>>[>>]]][>>++[]]"
+# program = "+++[++[>>>[>>]]][>>++[]]"
+program = "+++[1[1.1[1.1.1]]]asda[2[2.1]]"
 # program = "+[>++[<-]]" # a=1 b=2
 s(program)
