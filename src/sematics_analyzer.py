@@ -36,7 +36,7 @@ class SemanticsAnalyzer:
             ch = code[i]
             # print(ch, ptr)
             if ch == '>':
-                if ptr == UPPER_BOUND:  # upper bound err
+                if ptr > UPPER_BOUND:  # upper bound err
                     raise SystemError('Pointer out of bounds')
                 ptr += 1
                 if ptr in variables.keys():
@@ -44,7 +44,7 @@ class SemanticsAnalyzer:
                 else:
                     curr_var = 0
             elif ch == '<':
-                if ptr == LOWER_BOUND:  # lower bound err
+                if ptr < LOWER_BOUND:  # lower bound err
                     raise SystemError('Pointer out of bounds')
                 ptr -= 1
                 if ptr in variables.keys():
