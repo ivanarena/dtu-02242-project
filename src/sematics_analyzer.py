@@ -4,10 +4,6 @@ import pprint
 UPPER_BOUND = 30000
 LOWER_BOUND = 0
 
-class SemanticsAnalyzer:
-    def __init__(self):
-        self.runtime = 0
-        self.ptr = 0
 
 class SemanticsAnalyzer:
     def __init__(self):
@@ -93,19 +89,44 @@ class SemanticsAnalyzer:
         sanitized_code = re.sub(pattern, '', sanitized_code)  # Remove text inside square brackets
         return sanitized_code
 
-    def _solve_loop(self, cell, value, code):
-
-        code = self.__sanitize(code) # only keep relevant values
-
-        # remember to update variables
-
-        return cell
-
     def _get_nth_loop(self, loop, nested_count):
         while nested_count > 0:
             loop = loop['nested_loop']
             nested_count -= 1
         return loop
+
+    def _solve_loop(self, cell, value, code, variables):
+
+        code = self.__sanitize(code) # only keep relevant values
+
+        # first analysis
+        if '-' not in code:
+            raise RuntimeError("The loop never halts.")
+
+        ptr = cell
+        plus_count = 0
+        minus_count = 0
+        
+        # TODO assume that loops run at least once so if variables is decremented or incremented update it to -/+1 
+
+        # analyse loop
+        for ch in code:
+            if ch == '<':
+                ptr -= 1
+            elif ch == '>':
+                ptr += 1
+            elif ptr == cell:
+                if ch == '+':
+                    plus_count += 1
+                if ch == '-':
+                    minus_count += 1
+        
+        # not decrementing enough
+        if plus_count >= minus_count:
+            raise RuntimeError("The loop never halts.")
+
+
+        return cell
     
 
     def analyze(self, code):
@@ -145,10 +166,13 @@ class SemanticsAnalyzer:
             curr_loop, nested_count = self._get_innermost_loop(curr_loop, nested_count)
             
             while nested_count >= 0: # solve in order of depth
-                updated_variables = self._solve_loop(curr_loop["cell"], curr_loop["value"], curr_loop["code"])
+                cell_to_zero = self._solve_loop(curr_loop["cell"], curr_loop["value"], curr_loop["code"], variables)
                 
+                # TODO update cell that has been set to zero
                 nested_count -= 1
                 curr_loop = self._get_nth_loop(loop, nested_count) # get loop 1 level above
+
+                
                 
             
         
@@ -230,8 +254,6 @@ class SemanticsAnalyzer:
         self.analyze(code)
 
 s = SemanticsAnalyzer()
-program = "+++[++[>>>[>>]]][>>++[+++]]"
-# program = "+++[++[>>>[>>]]][>>++[]]"
-program = "+++[1[1.1[1.1.1]]]asda[2[2.1]]"
+program = "+++[++---]"
 # program = "+[>++[<-]]" # a=1 b=2
 s(program)
