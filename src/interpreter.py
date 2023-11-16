@@ -1,5 +1,5 @@
 from syntax_analyzer import SyntaxAnalyzer
-from sematics_analyzer import SemanticsAnalyzer
+from src.semantics_analyzer import SemanticsAnalyzer
 import os
 import time
 
@@ -35,18 +35,15 @@ class Interpreter:
 
         if analysis == 'syntactic':
             analyzer = self.syntax_analyzer
-            try:
-                halts = analyzer(code)
-            except SyntaxError:
-                raise SyntaxError('The program is not well-formatted.')
-            except SystemError:
-                raise SystemError('The program never halts.')
         else:
             analyzer = self.semantics_analyzer
-            try:
-                halts = analyzer(code)
-            except SystemError:
-                raise SystemError('The program never halts.')
+
+        try:
+            analyzer(code)
+        except SyntaxError:
+            raise SyntaxError('The program is not well-formatted.')
+        except SystemError:
+            raise SystemError('The program never halts.')
 
         while code_ptr < code_length:
             command = code[code_ptr]
@@ -56,11 +53,11 @@ class Interpreter:
             elif command == '<':
                 self.pointer -= 1
             elif command == '+':
-                self.memory[self.pointer] = (
-                    self.memory[self.pointer] + 1) % 256
+                if self.memory[self.pointer] < 255: 
+                    self.memory[self.pointer] = self.memory[self.pointer] + 1
             elif command == '-':
-                self.memory[self.pointer] = (
-                    self.memory[self.pointer] - 1) % 256
+                if self.memory[self.pointer] > 0: 
+                    self.memory[self.pointer] = self.memory[self.pointer] - 1
             elif command == '.':
                 self.output += chr(self.memory[self.pointer])
             elif command == ',':
@@ -127,7 +124,7 @@ if __name__ == '__main__':
             with open(file_path, 'r') as file:
                 print(f"Interpreting {filename}...")
                 input = 'hello'
-                analysis = 'syntactic'
+                analysis = 'semantic'
                 try:
                     interpreter(file_path, input=input, analysis=analysis)
                     print(
@@ -135,6 +132,6 @@ if __name__ == '__main__':
                 except SyntaxError:
                     print('SyntaxError: The program is not well-formatted.')   
                 except RuntimeError:
-                    print('RuntimeError: The program did not halt in 10000 steps.')     
+                    print('RuntimeError: The program never halts.')     
                 
                 print(f"="*50)

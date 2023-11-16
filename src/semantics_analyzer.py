@@ -80,7 +80,7 @@ class SemanticsAnalyzer:
         if stack:
             raise SyntaxError('Loop start found without a corresponding loop end')
 
-        return loops, variables
+        return loops
 
     def __sanitize(self, code):
         pattern = re.compile(r'\[.*?\]')  # Match anything inside square brackets
@@ -95,7 +95,7 @@ class SemanticsAnalyzer:
             nested_count -= 1
         return loop
 
-    def _solve_loop(self, cell, value, code, variables):
+    def _solve_loop(self, cell, value, code):
 
         code = self.__sanitize(code) # only keep relevant values
 
@@ -104,10 +104,8 @@ class SemanticsAnalyzer:
             raise RuntimeError("The loop never halts.")
 
         ptr = cell
-        plus_count = 0
-        minus_count = 0
         
-        # TODO assume that loops run at least once so if variables is decremented or incremented update it to -/+1 
+        to_update = {} # (key, value) pair is (variable, increment/decrement count)
 
         # analyse loop
         for ch in code:
@@ -115,19 +113,43 @@ class SemanticsAnalyzer:
                 ptr -= 1
             elif ch == '>':
                 ptr += 1
-            elif ptr == cell:
-                if ch == '+':
-                    plus_count += 1
-                if ch == '-':
-                    minus_count += 1
+            elif ch == '+':
+                if ptr in to_update.keys():
+                    to_update[ptr] += 1
+                else:
+                    to_update[ptr] = 1
+            elif ch == '-':
+                if ptr in to_update.keys():
+                    to_update[ptr] -= 1
+                else:
+                    to_update[ptr] = -1
         
         # not decrementing enough
-        if plus_count >= minus_count:
+        if to_update[cell] > -1:
             raise RuntimeError("The loop never halts.")
 
-
-        return cell
+        # ! assume that loops run at least once so decrement/increment once 
+        return to_update
     
+    def _get_init_variables(self, code):
+        variables = {0: 0}
+
+        ptr = 0
+        for ch in code:
+            if ch == '[':
+                break
+            if ch == '<':
+                ptr -= 1
+            elif ch == '>':
+                ptr += 1
+            elif ch == '+':
+                variables[ptr] += 1
+            elif ch == '-':
+                variables[ptr] -= 1
+            if ptr not in variables.keys():
+                variables[ptr] = 0
+
+        return variables
 
     def analyze(self, code):
         """
@@ -142,40 +164,52 @@ class SemanticsAnalyzer:
                 level: 0
             }
         """
-        loops, variables = self._parse_loops(code)      
-        # print("CODE")
-        # pprint.pprint(code)
-        # print("LOOPS")
-        # pprint.pprint(loops)
-        # print("variables")
-        # pprint.pprint(variables)
-        
-        # TODO:
-        # 1.    decide queue order
-        # 2.    for every loop in order:
-        #   2.1     read loop
-        #   2.2     update variables dict
-        #   2.3     decide if loop terminates 
-        #       2.3.1a   if loop terminates continue
-        #       2.3.1b   if loop doesn't terminate raise exception 
-                            # loop for sure does not terminate if the variable I entered the loop with stays untouched
+        loops = self._parse_loops(code)      
+        variables = self._get_init_variables(code)
+
         for loop in loops:
             curr_loop = loop
             nested_count = 0
             
             curr_loop, nested_count = self._get_innermost_loop(curr_loop, nested_count)
             
+            # ! nested_count == 0 solves the outermost loop
             while nested_count >= 0: # solve in order of depth
-                cell_to_zero = self._solve_loop(curr_loop["cell"], curr_loop["value"], curr_loop["code"], variables)
-                
-                # TODO update cell that has been set to zero
+
+                if curr_loop["value"] > 0:
+
+                    to_update = self._solve_loop(curr_loop["cell"], curr_loop["value"], curr_loop["code"])
+                    
+
+                    # update variables
+                    for var in to_update.keys():
+                        # if loop halts then entering cell value is 0 by definition
+                        if var == curr_loop["cell"]:
+                            variables[var] = 0
+                        else:
+                            if var in variables.keys():
+                                variables[var] += to_update[var]
+
+                            # first encounter of the variable
+                            else:
+                                if to_update[var] > 0:
+                                    variables[var] = to_update[var]
+                            
+                            # keep values beneath interpreter boundaries 
+                            if variables[var] < 0:
+                                variables[var] = 0                                 
+                            elif variables[var] > 255:
+                                variables[var] = 255                                       
+
+                    
+                    
+
                 nested_count -= 1
                 curr_loop = self._get_nth_loop(loop, nested_count) # get loop 1 level above
 
-                
-                
-            
-        
+                curr_loop["value"] = variables[curr_loop['cell']] # update entering value from updated variables
+
+        return True
         
         
         """
@@ -252,8 +286,3 @@ class SemanticsAnalyzer:
 
     def __call__(self, code):
         self.analyze(code)
-
-s = SemanticsAnalyzer()
-program = "+++[++---]"
-# program = "+[>++[<-]]" # a=1 b=2
-s(program)
