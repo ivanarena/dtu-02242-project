@@ -106,6 +106,7 @@ class SemanticsAnalyzer:
         ptr = cell
         
         to_update = {} # (key, value) pair is (variable, increment/decrement count)
+        to_update[cell] = 0
 
         # analyse loop
         for ch in code:
@@ -196,7 +197,7 @@ class SemanticsAnalyzer:
                                     variables[var] = to_update[var]
                             
                             # keep values beneath interpreter boundaries 
-                            if variables[var] < 0:
+                            if not (var in variables.keys()) or variables[var] < 0:
                                 variables[var] = 0                                 
                             elif variables[var] > 255:
                                 variables[var] = 255                                       
