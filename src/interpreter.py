@@ -1,5 +1,5 @@
-from syntax_analyzer import SyntaxAnalyzer
-from semantics_analyzer import SemanticsAnalyzer
+from src.syntax_analyzer import SyntaxAnalyzer
+from src.semantics_analyzer import SemanticsAnalyzer
 import os
 import time
 
