@@ -86,12 +86,12 @@ class Interpreter:
             code_ptr += 1
             self.steps += 1
             if (self.steps > 10000): # increase this
-                raise RuntimeError() 
+                raise SystemError() 
 
         end_time = time.time()
         self.runtime = (end_time - start_time) * 1000
-        if self.output:
-            print(self.output)
+       # if self.output:
+        #    print(self.output)
 
     def reset(self):
         self.memory = [0] * 30000
@@ -124,14 +124,14 @@ if __name__ == '__main__':
             with open(file_path, 'r') as file:
                 print(f"Interpreting {filename}...")
                 input = 'hello'
-                analysis = 'semantic'
+                analysis = 'syntactic'
                 try:
                     interpreter(file_path, input=input, analysis=analysis)
                     print(
                         f"Interpreted {filename} in {interpreter.steps} steps.")
                 except SyntaxError:
                     print('SyntaxError: The program is not well-formatted.')   
-                except RuntimeError:
-                    print('RuntimeError: The program never halts.')     
+                except SystemError:
+                    print('SystemError: The program never halts.')     
                 
                 print(f"="*50)

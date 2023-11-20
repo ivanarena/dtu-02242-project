@@ -101,7 +101,7 @@ class SemanticsAnalyzer:
 
         # first analysis
         if '-' not in code:
-            raise RuntimeError("The loop never halts.")
+            raise SystemError("The loop never halts.")
 
         ptr = cell
         
@@ -127,7 +127,7 @@ class SemanticsAnalyzer:
         
         # not decrementing enough
         if to_update[cell] > -1:
-            raise RuntimeError("The loop never halts.")
+            raise SystemError("The loop never halts.")
 
         # ! assume that loops run at least once so decrement/increment once 
         return to_update
