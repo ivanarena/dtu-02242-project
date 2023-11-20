@@ -1,6 +1,6 @@
 import re
 import time
-import analyzer
+from src.analyzer import well_formatted_loop
 
 class SyntaxAnalyzer:
     def __init__(self):
@@ -17,7 +17,7 @@ class SyntaxAnalyzer:
             self.runtime = (end_time - start_time) * 1000
             return True
         else: 
-            loops = analyzer.well_formatted_loop(code) # check if loop is well formatted and get loops
+            loops = well_formatted_loop(code) # check if loop is well formatted and get loops
             
             print("CODE", code)
             print("LOOPS", loops)
