@@ -26,8 +26,12 @@ class SyntaxAnalyzer:
                 print(loop[2])
                 if not loop[2]: # empty loop
                     raise SystemError('Not halting: loop is empty')
+            
                 
-                if re.search(r'^[^+,.-]*$', loop[2]) : # no + - inside loop (e.g., [>>>>] wont halt) [not complete because >>>[>+>>] wont match]
+                if re.search(r'^[><\+\[\]]+$', loop[2]) : # only +, >, <, [, ] (e.g., [+>++] or [+++[++>>>++]])
+                    raise SystemError('Not halting: loop increments (possibly moving) only')
+            
+                if re.search(r'^[^+,.-]*$', loop[2]) : # no + - inside loop (e.g., [>>>>] wont halt) [not complete because [>>>[-]] wont match]
                     raise SystemError('Not halting: loop has no reading or writing operations')
             
                 if loop[2].count('+') == loop[2].count('-') and (re.match(r'^[^<>]*$', loop[2])): 
