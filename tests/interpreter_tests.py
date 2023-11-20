@@ -31,8 +31,15 @@ def interpreter():
 def interpreter_v1():
     return Interpreter(valid_characters=True)
 
-
 def test_hello(interpreter):
     expected_output = "Hello World!"
-    interpreter.interpret(read(program_dict['hello']))
+    interpreter.interpret(read(program_dict['h_11_hello']),"", "syntactic")
     assert interpreter.output == expected_output
+
+def test_nh1(interpreter):
+    with pytest.raises(SystemError, match="The program never halts."):
+        interpreter.interpret(read(program_dict['nh_1']),"", "syntactic")
+
+
+        
+
