@@ -1,3 +1,4 @@
+from scipy.stats import chi2_contingency
 import pandas as pd
 from src.interpreter import Interpreter
 import os
@@ -5,56 +6,6 @@ from sklearn.metrics import classification_report
 from scipy.stats import ttest_rel
 
 PROGRAMS_DIRECTORY = 'programs/'
-
-
-# Define the functions to get the true positives, false positives, false negatives, and true negatives
-def get_true_positives(df, result_column):
-    return df[(df['halting'] == True) & (df[result_column] == True)].shape[0]
-
-def get_false_positives(df, result_column):
-    return df[(df['halting'] == False) & (df[result_column] == True)].shape[0]
-
-def get_false_negatives(df, result_column):
-    return df[(df['halting'] == True) & (df[result_column] == False)].shape[0]
-
-def get_true_negatives(df, result_column):
-    return df[(df['halting'] == False) & (df[result_column] == False)].shape[0]
-
-
-def test_one(filename):
-    interpreter = Interpreter()
-    input_data = 'hello'
-    file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
-
-    row = {"program": filename}
-
-    # Syntactic analysis
-    syntactic_analysis_result = True  # Positive = halting
-    try:
-        interpreter(file_path, input=input_data, analysis='syntactic')
-    except SystemError:
-        syntactic_analysis_result = False
-
-    row["syntactic_analysis_runtime"] = round(interpreter.analysis_runtime, 3)
-
-    # Semantic analysis
-    semantic_analysis_result = True  # Positive = halting
-    try:
-        interpreter(file_path, input=input_data, analysis='semantic')
-    except SystemError:
-        semantic_analysis_result = False
-
-    row["semantic_analysis_runtime"] = round(interpreter.analysis_runtime, 3)
-
-    # Halting or non-halting check
-    if filename.startswith('h'):
-        row["syntactic_analysis_result"] = syntactic_analysis_result
-        row["semantic_analysis_result"] = semantic_analysis_result
-    elif filename.startswith('nh'):
-        row["syntactic_analysis_result"] = not syntactic_analysis_result
-        row["semantic_analysis_result"] = not semantic_analysis_result
-
-    return row
 
 def test_all():
     filenames = os.listdir(PROGRAMS_DIRECTORY)
@@ -101,48 +52,38 @@ def test_all():
                 rows.append(row)
     return rows 
 
+def generate_classification_report(true_labels, predicted_labels, label_name):
+    report = classification_report(true_labels, predicted_labels, target_names=['False', 'True'])
+    print(f"{label_name} Analysis Results:")
+    print(report)
+
 if __name__ == '__main__':
     tests = test_all()
-    df = pd.DataFrame(tests).sort_values(by='program')
-    # Calculate metrics for syntactic analysis
-    syntactic_tp = get_true_positives(df, 'syntactic_analysis_result')
-    syntactic_fp = get_false_positives(df, 'syntactic_analysis_result')
-    syntactic_fn = get_false_negatives(df, 'syntactic_analysis_result')
-    syntactic_tn = get_true_negatives(df, 'syntactic_analysis_result')
+    df = pd.DataFrame(tests).sort_values(by='program').reset_index(drop=True)
 
-    # Calculate metrics for semantic analysis
-    semantic_tp = get_true_positives(df, 'semantic_analysis_result')
-    semantic_fp = get_false_positives(df, 'semantic_analysis_result')
-    semantic_fn = get_false_negatives(df, 'semantic_analysis_result')
-    semantic_tn = get_true_negatives(df, 'semantic_analysis_result')
+    # Round the runtime values
+    df['syntactic_analysis_runtime'] = round(df['syntactic_analysis_runtime'], 3)
+    df['semantic_analysis_runtime'] = round(df['semantic_analysis_runtime'], 3)
 
-    # Print the classification report
-    print("Syntactic Analysis Results:")
-    print(classification_report(df['syntactic_analysis_result'], df['halting']))
+    # Print the classification reports
+    generate_classification_report(df['syntactic_analysis_result'], df['halting'], 'Syntactic')
+    generate_classification_report(df['semantic_analysis_result'], df['halting'], 'Semantic')
 
-    print("Semantic Analysis Results:")
-    print(classification_report(df['semantic_analysis_result'], df['halting']))
-
-    # Assuming df is your DataFrame with the given dataset
+    # Perform T-test on runtime
     runtime_t_statistic, runtime_p_value = ttest_rel(df['syntactic_analysis_runtime'], df['semantic_analysis_runtime'])
-    result_t_statistic, result_p_value = ttest_rel(df['syntactic_analysis_result'].astype(int), df['semantic_analysis_result'].astype(int))
-
-
-    print("Runtime T-Statistic:", runtime_t_statistic)
-    print("Runtime P-Value:", runtime_p_value)
-    print("Result T-Statistic:", result_t_statistic)
-    print("Reuslt P-Value:", result_p_value)
-
-    from scipy.stats import chi2_contingency, chi2
+    print("\nRuntime T-Statistic:", round(runtime_t_statistic, 3))
+    print("Runtime P-Value:", round(runtime_p_value, 3))
 
     # Create a contingency table
     contingency_table = pd.crosstab(df['syntactic_analysis_result'], df['semantic_analysis_result'])
 
     # Perform McNemar test
     chi2_stat, p_value, _, _ = chi2_contingency(contingency_table)
+    print("\nChi-Square for McNemar Test:", round(chi2_stat, 3))
+    print("P-Value for McNemar Test:", round(p_value, 3))
+    
+    # Display the DataFrame
+    print("\nDataFrame:")
+    print(df[['program','halting']])
 
-    print("Chi-Square for McNemar Test:", chi2_stat)
-    print("P-Value for McNemar Test:", p_value)
-    
-    
-    print(df)
+
