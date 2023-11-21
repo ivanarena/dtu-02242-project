@@ -28,7 +28,7 @@ set PYTHONPATH=%PYTHONPATH%;%cd%
 if you use Windows (cmd). Then you can run the tests, from root directory:
 
 ```bash
-pytest tests/interpreter_tests.py
+python src/tester.py
 ```
 
 # Run
