@@ -1,57 +1,60 @@
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_score, recall_score, f1_score
-from scipy.stats import ttest_rel
-
+import pandas as pd
 from src.interpreter import Interpreter
 import os
+from sklearn.metrics import classification_report
+from scipy.stats import ttest_rel
 
 PROGRAMS_DIRECTORY = 'programs/'
 
 
-def calculate_metrics(test_results):
-    true_labels = []
-    syntactic_results = []
-    semantic_results = []
+# Define the functions to get the true positives, false positives, false negatives, and true negatives
+def get_true_positives(df, result_column):
+    return df[(df['halting'] == True) & (df[result_column] == True)].shape[0]
 
-    for result in test_results:
-        if result["program"].startswith('h'):
-            true_labels.append(True)
-        elif result["program"].startswith('nh'):
-            true_labels.append(False)
+def get_false_positives(df, result_column):
+    return df[(df['halting'] == False) & (df[result_column] == True)].shape[0]
 
-        syntactic_results.append(result["syntactic_analysis_result"])
-        semantic_results.append(result["semantic_analysis_result"])
+def get_false_negatives(df, result_column):
+    return df[(df['halting'] == True) & (df[result_column] == False)].shape[0]
 
-    syntactic_confusion_matrix = confusion_matrix(true_labels, syntactic_results)
-    semantic_confusion_matrix = confusion_matrix(true_labels, semantic_results)
+def get_true_negatives(df, result_column):
+    return df[(df['halting'] == False) & (df[result_column] == False)].shape[0]
 
-    syntactic_precision = precision_score(true_labels, syntactic_results)
-    syntactic_recall = recall_score(true_labels, syntactic_results)
-    syntactic_f1 = f1_score(true_labels, syntactic_results)
 
-    semantic_precision = precision_score(true_labels, semantic_results)
-    semantic_recall = recall_score(true_labels, semantic_results)
-    semantic_f1 = f1_score(true_labels, semantic_results)
+def test_one(filename):
+    interpreter = Interpreter()
+    input_data = 'hello'
+    file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
 
-    return {
-        "syntactic_confusion_matrix": syntactic_confusion_matrix,
-        "syntactic_precision": syntactic_precision,
-        "syntactic_recall": syntactic_recall,
-        "syntactic_f1": syntactic_f1,
+    row = {"program": filename}
 
-        "semantic_confusion_matrix": semantic_confusion_matrix,
-        "semantic_precision": semantic_precision,
-        "semantic_recall": semantic_recall,
-        "semantic_f1": semantic_f1,
-    }
+    # Syntactic analysis
+    syntactic_analysis_result = True  # Positive = halting
+    try:
+        interpreter(file_path, input=input_data, analysis='syntactic')
+    except SystemError:
+        syntactic_analysis_result = False
 
-def calculate_ttest(test_results):
-    syntactic_runtimes = [result["syntactic_analysis_runtime"] for result in test_results]
-    semantic_runtimes = [result["semantic_analysis_runtime"] for result in test_results]
+    row["syntactic_analysis_runtime"] = round(interpreter.analysis_runtime, 3)
 
-    _, ttest_p_value = ttest_rel(syntactic_runtimes, semantic_runtimes)
-    return ttest_p_value
+    # Semantic analysis
+    semantic_analysis_result = True  # Positive = halting
+    try:
+        interpreter(file_path, input=input_data, analysis='semantic')
+    except SystemError:
+        semantic_analysis_result = False
 
+    row["semantic_analysis_runtime"] = round(interpreter.analysis_runtime, 3)
+
+    # Halting or non-halting check
+    if filename.startswith('h'):
+        row["syntactic_analysis_result"] = syntactic_analysis_result
+        row["semantic_analysis_result"] = semantic_analysis_result
+    elif filename.startswith('nh'):
+        row["syntactic_analysis_result"] = not syntactic_analysis_result
+        row["semantic_analysis_result"] = not semantic_analysis_result
+
+    return row
 
 def test_all():
     filenames = os.listdir(PROGRAMS_DIRECTORY)
@@ -60,14 +63,20 @@ def test_all():
     
     for filename in filenames:
         if filename.endswith('.bf'):
+            halting = ''
+            if filename.startswith('h'):
+                halting = True
+            elif filename.startswith('nh'):
+                halting = False
+
             input = 'hello'
             file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
             with open(file_path, 'r') as file:
                 
-                row = {"program": filename}
+                row = {"program": filename, "halting": halting}
                 
                 # syntactic
-                syntactic_analysis_result = True # = positive = halting 
+                syntactic_analysis_result = True 
                 try:
                     interpreter(file_path, input=input, analysis='syntactic')
                 except SystemError:
@@ -77,53 +86,63 @@ def test_all():
 
                     
                 # semantic
-                semantic_analysis_result = True # = positive = halting 
+                semantic_analysis_result = True
                 try:
                     interpreter(file_path, input=input, analysis='semantic')
                 except SystemError:
                     semantic_analysis_result = False
                 
                 row["semantic_analysis_runtime"] = round(interpreter.analysis_runtime,3)
-                
-                if filename.startswith('h'): # halting = must be true
-                    if syntactic_analysis_result:
-                        row["syntactic_analysis_result"] = syntactic_analysis_result # correct
-                    else:
-                        row["syntactic_analysis_result"] = False
-                    if semantic_analysis_result:
-                        row["semantic_analysis_result"] = semantic_analysis_result # correct
-                    else:
-                        row["semantic_analysis_result"] = False
 
-                if filename.startswith('nh'): # non-halting = must be false
-                    if not syntactic_analysis_result:
-                        row["syntactic_analysis_result"] = syntactic_analysis_result # correct
-                    else:
-                        row["syntactic_analysis_result"] = False
-                    if not semantic_analysis_result:
-                        row["semantic_analysis_result"] = semantic_analysis_result # correct
-                    else:
-                        row["semantic_analysis_result"] = False
+                row["syntactic_analysis_result"] = syntactic_analysis_result 
+                row["semantic_analysis_result"] = semantic_analysis_result
                 
+
                 rows.append(row)
     return rows 
 
 if __name__ == '__main__':
     tests = test_all()
-    print(len(tests))
-    metrics = calculate_metrics(tests)
-    ttest_p_value = calculate_ttest(tests)
+    df = pd.DataFrame(tests).sort_values(by='program')
+    # Calculate metrics for syntactic analysis
+    syntactic_tp = get_true_positives(df, 'syntactic_analysis_result')
+    syntactic_fp = get_false_positives(df, 'syntactic_analysis_result')
+    syntactic_fn = get_false_negatives(df, 'syntactic_analysis_result')
+    syntactic_tn = get_true_negatives(df, 'syntactic_analysis_result')
 
-    print("Syntactic Confusion Matrix:")
-    print(metrics["syntactic_confusion_matrix"])
-    print("Syntactic Precision:", metrics["syntactic_precision"])
-    print("Syntactic Recall:", metrics["syntactic_recall"])
-    print("Syntactic F1 Score:", round(metrics["syntactic_f1"],3))
+    # Calculate metrics for semantic analysis
+    semantic_tp = get_true_positives(df, 'semantic_analysis_result')
+    semantic_fp = get_false_positives(df, 'semantic_analysis_result')
+    semantic_fn = get_false_negatives(df, 'semantic_analysis_result')
+    semantic_tn = get_true_negatives(df, 'semantic_analysis_result')
 
-    print("\nSemantic Confusion Matrix:")
-    print(metrics["semantic_confusion_matrix"])
-    print("Semantic Precision:", metrics["semantic_precision"])
-    print("Semantic Recall:", metrics["semantic_recall"])
-    print("Semantic F1 Score:", round(metrics["semantic_f1"],3))
+    # Print the classification report
+    print("Syntactic Analysis Results:")
+    print(classification_report(df['syntactic_analysis_result'], df['halting']))
 
-    print("\nT-test p-value:", round(ttest_p_value,3))
+    print("Semantic Analysis Results:")
+    print(classification_report(df['semantic_analysis_result'], df['halting']))
+
+    # Assuming df is your DataFrame with the given dataset
+    runtime_t_statistic, runtime_p_value = ttest_rel(df['syntactic_analysis_runtime'], df['semantic_analysis_runtime'])
+    result_t_statistic, result_p_value = ttest_rel(df['syntactic_analysis_result'].astype(int), df['semantic_analysis_result'].astype(int))
+
+
+    print("Runtime T-Statistic:", runtime_t_statistic)
+    print("Runtime P-Value:", runtime_p_value)
+    print("Result T-Statistic:", result_t_statistic)
+    print("Reuslt P-Value:", result_p_value)
+
+    from scipy.stats import chi2_contingency, chi2
+
+    # Create a contingency table
+    contingency_table = pd.crosstab(df['syntactic_analysis_result'], df['semantic_analysis_result'])
+
+    # Perform McNemar test
+    chi2_stat, p_value, _, _ = chi2_contingency(contingency_table)
+
+    print("Chi-Square for McNemar Test:", chi2_stat)
+    print("P-Value for McNemar Test:", p_value)
+    
+    
+    print(df)

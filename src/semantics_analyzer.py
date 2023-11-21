@@ -195,6 +195,8 @@ class SemanticsAnalyzer:
                             else:
                                 if to_update[var] > 0:
                                     variables[var] = to_update[var]
+                                else:
+                                    variables[var] = 0
                             
                             # keep values beneath interpreter boundaries 
                             if not (var in variables.keys()) or variables[var] < 0:
@@ -207,76 +209,9 @@ class SemanticsAnalyzer:
 
                 nested_count -= 1
                 curr_loop = self._get_nth_loop(loop, nested_count) # get loop 1 level above
-
                 curr_loop["value"] = variables[curr_loop['cell']] # update entering value from updated variables
 
         return True
-        
-        
-        """
-        updated_variables = variables
-        for key, elem in loops.items(): # iterate through the loops in the program
-            initial_ptr = key
-            current_ptr = initial_ptr
-
-            #variables values are the ones post first iteration of loops
-            if variables[initial_ptr] == 0: # just one iteration to make the entering variable reach zero
-                print(f'loop {key} halts')
-                continue # move on to outer loop
-
-            for loop in elem:
-                # here it holds that variables[initial_ptr] != 0
-                print("LOOP", loop['code'])
-
-                if not loop['code']: # empty loop
-                    raise SystemError('Not halting: loop is empty')
-                 
-                if re.search(r'^[^+-]*$', loop['code']) : # no + - inside loop (e.g., [>>>>] wont halt) [not complete because >>>[>+>>] wont match]
-                    raise SystemError('Not halting: loop has no writing operations')
-                
-                if loop['code'].count('+') > 0 and re.search(r'^[^-<>]*$', loop['code']): # (not considering input for now) if a loop has no - or moving operations
-                    if (loop['code'].count('+') % 2 == 0 and variables[initial_ptr] % 2 == 0):
-                        print('it halts')
-                        variables[initial_ptr] = 0
-                        continue
-                    elif (loop['code'].count('+') % 2 == 0 and variables[initial_ptr] % 2 != 0):
-                        raise SystemError('Not halting: odd inital value and even increment') # does this always hold?
-                    elif (loop['code'].count('+') % 2 != 0 and variables[initial_ptr] % 2 == 0):
-                        raise SystemError('Not halting: even inital value and odd increment') # does this always hold?
-                    
-
-                if loop['code'].count('-') > 0 and re.search(r'^[^+<>]*$', loop['code']): # (not considering input for now) if a loop has no + or moving operations
-                    if (loop['code'].count('-') % 2 == 0 and variables[initial_ptr] % 2 == 0):
-                        print('it halts')
-                        variables[initial_ptr] = 0
-                        continue
-                    elif (loop['code'].count('+') % 2 == 0 and variables[initial_ptr] % 2 != 0):
-                        raise SystemError('Not halting: odd inital value and even increment')                 
-
-
-                for cmd in loop['code']: # to evaluate variables after another loop iteration (the 2nd one) 
-                    print('currptr', current_ptr)
-                    print('cmd', cmd)
-                    if cmd == '+':
-                        updated_variables[current_ptr] = (updated_variables[current_ptr] + 1) % 256
-                    elif cmd == '-':
-                        updated_variables[current_ptr] = (updated_variables[current_ptr] - 1) % 256
-                    elif cmd == '>':
-                        current_ptr += 1
-                    elif cmd == '<':
-                        current_ptr -= 1
-
-                print("UPDATED variables", updated_variables)
-                if updated_variables[initial_ptr] == 0:
-                    print('it halts')
-                # elif updated_variables[initial_ptr] < variables[initial_ptr] and ((variables[initial_ptr] - updated_variables[initial_ptr] % 2 != 0 and updated_variables[initial_ptr] % 2 != 0) or (variables[initial_ptr] - updated_variables[initial_ptr] % 2 == 0 and updated_variables[initial_ptr] % 2 == 0)):
-                #     print('halts')
-                else:
-                    raise SystemError('not halts') # give up and say that it does not halt (?)
-                    
-            variables[initial_ptr] = 0 # update variables with the initial of this cycle (or with all the changed values?)
-                                
-            """
 
     def _get_innermost_loop(self, curr_loop, nested_count):
         while curr_loop['has_nested_loop'] is True: # go to innermost loop 

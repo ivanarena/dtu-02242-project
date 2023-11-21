@@ -116,29 +116,3 @@ class Interpreter:
         self.code = ''.join(c for c in content if c in "+-<>[],.")
 
         self.interpret(self.code, input=input, analysis=analysis)
-
-
-# temporary to run each files
-if __name__ == '__main__':
-    PROGRAMS_DIRECTORY = 'programs/'
-
-    filenames = os.listdir(PROGRAMS_DIRECTORY)
-
-    interpreter = Interpreter()
-    for filename in filenames:
-        if filename.endswith('.bf'):
-            file_path = os.path.join(PROGRAMS_DIRECTORY, filename)
-            with open(file_path, 'r') as file:
-                print(f"Interpreting {filename}...")
-                input = 'hello'
-                analysis = 'syntactic'
-                try:
-                    interpreter(file_path, input=input, analysis=analysis)
-                    print(
-                        f"Interpreted {filename} in {interpreter.steps} steps.")
-                except SyntaxError:
-                    print('SyntaxError: The program is not well-formatted.')   
-                except SystemError:
-                    print('SystemError: The program never halts.')     
-                
-                print(f"="*50)
