@@ -13,11 +13,12 @@ class Interpreter:
         self.output = ''
         self.runtime = 0
         self.steps = 0
+        self.analysis_runtime = 0
 
         self.syntax_analyzer = SyntaxAnalyzer()
         self.semantics_analyzer = SemanticsAnalyzer()
 
-    def interpret(self, code, input=None, analysis='syntactic'):
+    def interpret(self, code, input=None, analysis='syntactic', omit_output=True):
         """
         Interprets a Brainfuck program
 
@@ -39,10 +40,15 @@ class Interpreter:
             analyzer = self.semantics_analyzer
 
         try:
+            start_time = time.time()
             analyzer(code)
+            end_time = time.time()
+            self.analysis_runtime = (end_time - start_time) * 1000
         except SyntaxError:
             raise SyntaxError('The program is not well-formatted.')
         except SystemError:
+            end_time = time.time()
+            self.analysis_runtime = (end_time - start_time) * 1000
             raise SystemError('The program never halts.')
 
         while code_ptr < code_length:
@@ -85,13 +91,13 @@ class Interpreter:
                             loop_depth -= 1
             code_ptr += 1
             self.steps += 1
-            if (self.steps > 10000): # increase this
+            if (self.steps > 10000):
                 raise SystemError() 
 
         end_time = time.time()
         self.runtime = (end_time - start_time) * 1000
-       # if self.output:
-        #    print(self.output)
+        if self.output and not omit_output:
+            print(self.output)
 
     def reset(self):
         self.memory = [0] * 30000
@@ -99,6 +105,7 @@ class Interpreter:
         self.output = ''
         self.runtime = 0
         self.steps = 0
+        self.analysis_runtime = 0
 
     def __call__(self, file_path, input, analysis):
         self.reset()

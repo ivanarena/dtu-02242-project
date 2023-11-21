@@ -18,12 +18,8 @@ class SyntaxAnalyzer:
             return True
         else: 
             loops = well_formatted_loop(code) # check if loop is well formatted and get loops
-            
-            print("CODE", code)
-            print("LOOPS", loops)
 
             for loop in loops:
-                print(loop[2])
                 if not loop[2]: # empty loop
                     raise SystemError('Not halting: loop is empty')
             
