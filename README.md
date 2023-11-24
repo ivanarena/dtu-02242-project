@@ -18,11 +18,11 @@ python -m pip install -r requirements.txt
 First, update the `PYTHONPATH`:
 
 ```bash
-export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+export PYTHONPATH="$PYTHONPATH:$pwd/src"
 ```
 or
 ```bash
-set PYTHONPATH=%PYTHONPATH%;%cd%
+set PYTHONPATH=%PYTHONPATH%;%cd%\src
 ```
 
 if you use Windows (cmd). Then you can run the tests, from root directory:
